@@ -19,6 +19,9 @@ var explosions;
 var scoreText;
 var enemyBullet;
 var livingEnemies = [];
+var explosion;
+var booom;
+
 
 function preload() {
 
@@ -29,7 +32,14 @@ function preload() {
     game.load.spritesheet('kaboom', 'assets/explode.png', 128, 128);
     game.load.image('starfield', 'assets/background.png');
     game.load.image('lives', 'assets/lives.png');
-
+    game.load.audio('booom','assets/explode.wav');
+    game.load.audio('bullet','assets/bullet.wav');
+    game.load.image('replaya', 'assets/playagain.png');
+    game.load.image('replayb', 'assets/playapop.png');
+    game.load.image('exitb', 'assets/exit.png');
+    game.load.image('pauseb', 'assets/pause.png');
+    game.load.image('pmenu', 'assets/pausemenu.png');
+    game.load.image('restartb', 'assets/restart.png');
 }
 
 function create() {
@@ -42,6 +52,7 @@ function create() {
     player = game.add.sprite(400, 590, 'ship');
     player.anchor.setTo(0.5, 0.5);
     game.physics.enable(player, Phaser.Physics.ARCADE);
+    player.body.collideWorldBounds = true;
 
     cursors = game.input.keyboard.createCursorKeys();
 
@@ -60,12 +71,11 @@ function create() {
 
     //  Lives
     lives = game.add.group();
-    game.add.text(game.world.width - 100, 10, 'Lives : ', { font: '20px Perpetua', fill: '#fff' });
-    for (var i = 0; i < 3; i++) 
-    {
-        var ship = lives.create(game.world.width - 100 + (40 * i), 50, 'lives');
+    game.add.text(10, 50, 'Lives : ', { font: '20px Perpetua', fill: '#fff' });
+    for (var i = 0; i < 3; i++){
+        var ship = lives.create(20+ (40 * i), 100, 'lives');
         ship.anchor.setTo(0.5, 0.5);
-        ship.alpha = 0.5;
+        ship.alpha = 0.7;
     }
 
     //  The score
@@ -92,15 +102,70 @@ function create() {
     enemyBullets.setAll('outOfBoundsKill', true);
     enemyBullets.setAll('checkWorldBounds', true);
 
+    //  An explosion pool
+    explosions = game.add.group();
+    explosions.createMultiple(30, 'kaboom');
+    explosions.forEach(setupInvader, this);
+
+    // create sound effects
+    boomblast = game.add.audio('booom');
+    lazer = game.add.audio('bullet');
+
+    pauseBut = game.add.button(680, 10, 'pauseb', callButton);
+}
+
+function callButton(){
+	pauseMe = game.add.sprite(400, 325, 'pmenu');
+	pauseMe.anchor.setTo(0.5, 0.5);
+
+	restartbut = game.add.button(400, 325, 'restartb', reset1);
+	restartbut.anchor.setTo(0.5, 0.5);
+
+	exitbut = game.add.button(400, 425, 'exitb', clearB);
+	exitbut.anchor.setTo(0.5, 0.5);
 
 }
+
+function clearB (){
+
+	pauseMe.kill();
+	restartbut.kill();
+	exitbut.kill();
+}
+
+function reset1 (){
+    lives.callAll('revive');
+    //  And brings the aliens back from the dead :)
+    aliens.removeAll();
+    createAliens();
+
+    //revives the player
+    player.revive();
+    //hides the text
+	pauseMe.kill();
+	restartbut.kill();
+	exitbut.kill();
+
+											// score = 0;
+}
+
+function finish(){
+	finishBackground = game.add.button(400, 325, 'replayb');
+	finishBackground.anchor.setTo(0.5, 0.5);
+	finishButton = game.add.button(400, 325, 'replaya', reset);
+	finishButton.anchor.setTo(0.5, 0.5);
+}
+
+
+
+
 
 
 function setupInvader (invader) {
-
-
-
-}
+    invader.anchor.x = 0.5;
+    invader.anchor.y = 0.5;
+    invader.animations.add('kaboom');
+};
 
 
 
@@ -111,24 +176,20 @@ function update() {
 
     // move player 
 
-        if (cursors.left.isDown)
-        {
+        if (cursors.left.isDown){
             player.body.velocity.x = -200;
         }
-        else if (cursors.right.isDown)
-        {
+        else if (cursors.right.isDown){
             player.body.velocity.x = 200;
-
         }
+
     // fire bullets
-    if (fireButton.isDown)
-    {
+    if (fireButton.isDown){
         // bullet.animations.play('fire')
         fireBullet();
     }
 
-    if (game.time.now > firingTimer)
-    {
+    if (game.time.now > firingTimer){
         enemyFires();
     }
 
@@ -140,38 +201,34 @@ function update() {
 
 function fireBullet () {
     
+    // sound for event
+    						// lazer.play();
+
     //  To avoid them being allowed to fire too fast we set a time limit
-    if (game.time.now > bulletTime)
-    {
+    if (game.time.now > bulletTime){
         //  Grab the first bullet we can from the pool
         bullet = bullets.getFirstExists(false);
 
-        if (bullet)
-        {
+        if (bullet){
             //  And fire it
-
             bullet.reset(player.x, player.y + 8);
             bullet.body.velocity.y = -400;
             bulletTime = game.time.now + 200;
         }
     }
-
-
 }
 
 function createAliens () {
 
-    for (var y = 0; y < 4; y++)
-    {
-        for (var x = 0; x < 10; x++)
-        {
+    for (var y = 0; y < 4; y++){
+        for (var x = 0; x < 10; x++){
             var alien = aliens.create(x * 43, y * 50, 'invader');
             alien.anchor.setTo(0.5, 0.5);
             alien.body.moves = false;
         }
     }
 
-    aliens.x = 110;
+    aliens.x = 140;
     aliens.y = 15;
 
     //   Invaders left/right motion
@@ -199,11 +256,30 @@ function collisionHandler (bullet, alien) {
     score += 20;
     scoreText.text = scoreString + score;
 
+    // sound for event
+    				// boomblast.play();
 
+    //  And create an explosion
+    var explosion = explosions.getFirstExists(false);
+    explosion.reset(alien.body.x, alien.body.y);
+    explosion.play('kaboom', 30, false, true);
+
+    // end game
+    if (aliens.countLiving() == 0){
+    score += 1000;
+    scoreText.text = scoreString + score;
+
+    enemyBullets.callAll('kill',this);
+    
+    finish();
+    }
 }
 
 
 function enemyFires () {
+
+	// sound for event
+				// lazer.play();
 
     //  Grab the first bullet we can from the pool
     enemyBullet = enemyBullets.getFirstExists(false);
@@ -215,8 +291,7 @@ function enemyFires () {
         // put every living enemy in an array
         livingEnemies.push(alien);
     });
-      if (enemyBullet && livingEnemies.length > 0)
-    {
+    if (enemyBullet && livingEnemies.length > 0){
         
         var random=game.rnd.integerInRange(0,livingEnemies.length-1);
 
@@ -236,23 +311,47 @@ function enemyHitsPlayer (player,bullet) {
 
     live = lives.getFirstAlive();
 
-    if (live)
-    {
+    if (live){
         live.kill();
     }
 
+    // sound for event
+    				// boomblast.play();
 
+    //  And create an explosion :)
+    var explosion = explosions.getFirstExists(false);
+    explosion.reset(player.body.x, player.body.y);
+    explosion.play('kaboom', 30, false, true);
 
+    // When the player dies
+    if (lives.countLiving() < 1){
+        player.kill();
+        enemyBullets.callAll('kill');
+    }
 }
 
 
 function resetBullet (bullet) {
-
-
+    //  Called if the bullet goes out of the screen
+    bullet.kill();
 
 }
 
-function restart () {
+function reset () {
 
+														// score = 0;
+    //resets the life count
+    lives.callAll('revive');
+    //  And brings the aliens back from the dead :)
+    aliens.removeAll();
+    createAliens();
+
+    //revives the player
+    player.revive();
+    //hides the text
+    stateText.visible = false;
+
+    finishButton.kill();
+    finishBackground.kill();
 
 }
