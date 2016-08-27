@@ -1,4 +1,4 @@
-var game = new Phaser.Game(800, 650, Phaser.AUTO, 'phaser-example', { preload: preload, create: create, update: update});
+var game = new Phaser.Game(800, 650, Phaser.AUTO, 'playGame', { preload: preload, create: create, update: update});
 
 var player;
 var lives;
@@ -21,6 +21,13 @@ var enemyBullet;
 var livingEnemies = [];
 var explosion;
 var booom;
+var finishButton;
+var boomblast;
+var lazer;
+var pauseBut;
+var pauseMe;
+var restartbut;
+var exitbut;
 
 
 function preload() {
@@ -40,6 +47,7 @@ function preload() {
     game.load.image('pauseb', 'assets/pause.png');
     game.load.image('pmenu', 'assets/pausemenu.png');
     game.load.image('restartb', 'assets/restart.png');
+    game.load.image('exit', 'assets/lost.png');
 }
 
 function create() {
@@ -150,10 +158,17 @@ function reset1 (){
 }
 
 function finish(){
-	finishBackground = game.add.button(400, 325, 'replayb');
+	finishBackground = game.add.sprite(400, 325, 'replayb');
 	finishBackground.anchor.setTo(0.5, 0.5);
 	finishButton = game.add.button(400, 325, 'replaya', reset);
 	finishButton.anchor.setTo(0.5, 0.5);
+}
+
+function lost(){
+	exitBackground = game.add.sprite(400, 325, 'exit');
+	exitBackground.anchor.setTo(0.5, 0.5);
+	lostButton = game.add.button(400, 325, 'replaya', reset);
+	lostButton.anchor.setTo(0.5, 0.5);
 }
 
 
@@ -327,6 +342,7 @@ function enemyHitsPlayer (player,bullet) {
     if (lives.countLiving() < 1){
         player.kill();
         enemyBullets.callAll('kill');
+        lost();
     }
 }
 
@@ -353,5 +369,8 @@ function reset () {
 
     finishButton.kill();
     finishBackground.kill();
+
+    lostButton.kill();
+    exitBackground.kill();
 
 }
