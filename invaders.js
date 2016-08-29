@@ -22,16 +22,17 @@ var livingEnemies = [];
 var explosion;
 var booom;
 var finishButton;
+var finishBackground;
 var boomblast;
 var lazer;
 var pauseBut;
 var pauseMe;
 var restartbut;
 var exitbut;
-
+var lostButton;
+var exitBackground;
 
 function preload() {
-
     game.load.spritesheet('bullet', 'assets/blast.png');
     game.load.image('enemyBullet', 'assets/enemy-bullet.png');
     game.load.spritesheet('invader', 'assets/invader32x32x4.png', 32, 32);
@@ -51,7 +52,6 @@ function preload() {
 }
 
 function create() {
-
     // create background
     game.physics.startSystem(Phaser.Physics.ARCADE);
     starfield = game.add.tileSprite(0, 0, 800, 650, 'starfield');
@@ -123,6 +123,7 @@ function create() {
 }
 
 function callButton(){
+
 	pauseMe = game.add.sprite(400, 325, 'pmenu');
 	pauseMe.anchor.setTo(0.5, 0.5);
 
@@ -131,14 +132,13 @@ function callButton(){
 
 	exitbut = game.add.button(400, 425, 'exitb', clearB);
 	exitbut.anchor.setTo(0.5, 0.5);
-
 }
 
 function clearB (){
-
 	pauseMe.kill();
 	restartbut.kill();
 	exitbut.kill();
+	game.paused = false;
 }
 
 function reset1 (){
@@ -153,8 +153,7 @@ function reset1 (){
 	pauseMe.kill();
 	restartbut.kill();
 	exitbut.kill();
-
-											// score = 0;
+												score += 300;
 }
 
 function finish(){
@@ -167,14 +166,26 @@ function finish(){
 function lost(){
 	exitBackground = game.add.sprite(400, 325, 'exit');
 	exitBackground.anchor.setTo(0.5, 0.5);
-	lostButton = game.add.button(400, 325, 'replaya', reset);
+	lostButton = game.add.button(400, 325, 'replaya', reset2);
 	lostButton.anchor.setTo(0.5, 0.5);
 }
 
+function reset2 () {
+												score += 300;
+    //resets the life count
+    lives.callAll('revive');
+    //  And brings the aliens back from the dead :)
+    aliens.removeAll();
+    createAliens();
 
+    //revives the player
+    player.revive();
+    //hides the text
+    stateText.visible = false;
 
-
-
+    lostButton.kill();
+    exitBackground.kill();
+}
 
 function setupInvader (invader) {
     invader.anchor.x = 0.5;
@@ -182,40 +193,32 @@ function setupInvader (invader) {
     invader.animations.add('kaboom');
 };
 
-
-
 function update() {
-
     //  The scrolling starfield background
     starfield.tilePosition.y += 2;
 
     // move player 
-
-        if (cursors.left.isDown){
-            player.body.velocity.x = -200;
-        }
-        else if (cursors.right.isDown){
-            player.body.velocity.x = 200;
-        }
+    if (cursors.left.isDown){
+        player.body.velocity.x = -200;
+    }
+    else if (cursors.right.isDown){
+        player.body.velocity.x = 200;
+    }
 
     // fire bullets
     if (fireButton.isDown){
         // bullet.animations.play('fire')
         fireBullet();
     }
-
     if (game.time.now > firingTimer){
         enemyFires();
     }
 
     game.physics.arcade.overlap(bullets, aliens, collisionHandler, null, this);
     game.physics.arcade.overlap(enemyBullets, player, enemyHitsPlayer, null, this);
-    
-
 }
 
 function fireBullet () {
-    
     // sound for event
     						// lazer.play();
 
@@ -223,7 +226,6 @@ function fireBullet () {
     if (game.time.now > bulletTime){
         //  Grab the first bullet we can from the pool
         bullet = bullets.getFirstExists(false);
-
         if (bullet){
             //  And fire it
             bullet.reset(player.x, player.y + 8);
@@ -234,7 +236,6 @@ function fireBullet () {
 }
 
 function createAliens () {
-
     for (var y = 0; y < 4; y++){
         for (var x = 0; x < 10; x++){
             var alien = aliens.create(x * 43, y * 50, 'invader');
@@ -248,25 +249,13 @@ function createAliens () {
 
     //   Invaders left/right motion
     var tween = game.add.tween(aliens).to( { x: 280 }, 2000, Phaser.Easing.Linear.None, true, 0, 1000, true);
-
-    //  When the tween loops it calls descend
-    // tween.onLoop = function(){
-    //     aliens.y += 10;
-    // }
-
 }
 
-// function descend() {
-
-// }
-
-
-
 function collisionHandler (bullet, alien) {
-
     // kill bullet and alien
     bullet.kill();
     alien.kill();
+
     //  Increase the score
     score += 20;
     scoreText.text = scoreString + score;
@@ -283,42 +272,33 @@ function collisionHandler (bullet, alien) {
     if (aliens.countLiving() == 0){
     score += 1000;
     scoreText.text = scoreString + score;
-
     enemyBullets.callAll('kill',this);
-    
     finish();
     }
 }
 
-
 function enemyFires () {
-
 	// sound for event
 				// lazer.play();
 
     //  Grab the first bullet we can from the pool
     enemyBullet = enemyBullets.getFirstExists(false);
-
     livingEnemies.length=0;
 
     aliens.forEachAlive(function(alien){
-
         // put every living enemy in an array
         livingEnemies.push(alien);
     });
-    if (enemyBullet && livingEnemies.length > 0){
-        
-        var random=game.rnd.integerInRange(0,livingEnemies.length-1);
 
+    if (enemyBullet && livingEnemies.length > 0){
+        var random=game.rnd.integerInRange(0,livingEnemies.length-1);
         // randomly select one of them
         var shooter=livingEnemies[random];
         // And fire the bullet from this enemy
         enemyBullet.reset(shooter.body.x, shooter.body.y);
-
         game.physics.arcade.moveToObject(enemyBullet,player,120);
         firingTimer = game.time.now + 2000;
     }
-
 }
 
 function enemyHitsPlayer (player,bullet) {
@@ -346,16 +326,13 @@ function enemyHitsPlayer (player,bullet) {
     }
 }
 
-
 function resetBullet (bullet) {
     //  Called if the bullet goes out of the screen
     bullet.kill();
-
 }
 
 function reset () {
-
-														// score = 0;
+												score = 0;
     //resets the life count
     lives.callAll('revive');
     //  And brings the aliens back from the dead :)
@@ -369,8 +346,4 @@ function reset () {
 
     finishButton.kill();
     finishBackground.kill();
-
-    lostButton.kill();
-    exitBackground.kill();
-
 }
