@@ -12,7 +12,6 @@ var bulletTime = 0;
 var cursors;
 var fireButton;
 var firingTimer = 0;
-var stateText;
 var aliens;
 var fireButton;
 var explosions;
@@ -88,12 +87,7 @@ function create() {
 
     //  The score
     scoreString = 'Score : ';
-    scoreText = game.add.text(10, 10, scoreString + score, { font: '20px Perpetua', fill: '#fff' });
-
-    //  Text
-    stateText = game.add.text(game.world.centerX,game.world.centerY,' ', { font: '84px Perpetua', fill: '#fff' });
-    stateText.anchor.setTo(0.5, 0.5);
-    stateText.visible = false;
+    scoreText = game.add.text(10, 10, scoreString + score, { font: '20px Perpetua', fill: '#fff' })
 
     aliens = game.add.group();
     aliens.enableBody = true;
@@ -180,8 +174,6 @@ function reset2 () {
 
     //revives the player
     player.revive();
-    //hides the text
-    stateText.visible = false;
 
     lostButton.kill();
     exitBackground.kill();
@@ -311,7 +303,7 @@ function enemyHitsPlayer (player,bullet) {
     }
 
     // sound for event
-    				// boomblast.play();
+     boomblast.play();
 
     //  And create an explosion :)
     var explosion = explosions.getFirstExists(false);
@@ -341,8 +333,6 @@ function reset () {
 
     //revives the player
     player.revive();
-    //hides the text
-    stateText.visible = false;
 
     finishButton.kill();
     finishBackground.kill();
