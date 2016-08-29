@@ -220,7 +220,7 @@ function update() {
 
 function fireBullet () {
     // sound for event
-    						// lazer.play();
+    lazer.play();
 
     //  To avoid them being allowed to fire too fast we set a time limit
     if (game.time.now > bulletTime){
@@ -261,7 +261,7 @@ function collisionHandler (bullet, alien) {
     scoreText.text = scoreString + score;
 
     // sound for event
-    				// boomblast.play();
+    boomblast.play();
 
     //  And create an explosion
     var explosion = explosions.getFirstExists(false);
@@ -279,7 +279,7 @@ function collisionHandler (bullet, alien) {
 
 function enemyFires () {
 	// sound for event
-				// lazer.play();
+	lazer.play();
 
     //  Grab the first bullet we can from the pool
     enemyBullet = enemyBullets.getFirstExists(false);
